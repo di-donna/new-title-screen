@@ -1,0 +1,183 @@
+--- a/Dawn/src/middleware/bap/activity_message/activity_sense_update_parser_other_missions.cpp
++++ b/Dawn/src/middleware/bap/activity_message/activity_sense_update_parser_other_missions.cpp
+@@ -89,111 +89,75 @@
+-/** Parses the optional phase-1 roster acknowledgement that precedes the changed groups. */
++/** A roster body is a delta: key list, mask and state list are independently optional.
++ * Only a complete body identifies enough fields to publish acknowledgement entries. */
++[[nodiscard]] bool parse_roster_body(bits::Reader& reader, SenseUpdate& update,
++                                     std::int16_t bubble, bool top) noexcept {
++    std::uint64_t present{};
++    if (!reader.read(1, present)) return false;
++    if (!present) return true;
++    const auto width = top ? kTopCountWidth : kBubbleCountWidth;
++    const auto maximum = top ? kMaximumTopKeys : kMaximumBubbleKeys;
++    const auto words = top ? kTopMaskWords : kBubbleMaskWords;
++    std::array<std::uint32_t, kMaximumTopKeys> keys{};
++    std::array<std::uint32_t, kTopMaskWords> masks{};
++    std::array<std::uint8_t, kMaximumTopKeys> states{};
++    std::uint64_t hasKeys{}, hasMasks{}, hasStates{}, keyCount{}, stateCount{};
++    if (!reader.read(1, hasKeys)) return false;
++    if (hasKeys) {
++        if (!reader.read(width, keyCount) || keyCount > maximum) return false;
++        for (std::size_t i = 0; i < keyCount; ++i) {
++            std::uint64_t key{};
++            if (!reader.read(32, key)) return false;
++            keys[i] = static_cast<std::uint32_t>(key);
++        }
++    }
++    if (!reader.read(1, hasMasks)) return false;
++    if (hasMasks && !read_masks(reader, std::span(masks).first(words))) return false;
++    if (!reader.read(1, hasStates)) return false;
++    if (hasStates) {
++        if (!reader.read(width, stateCount) || stateCount > maximum
++            || (hasKeys && stateCount != keyCount)) return false;
++        for (std::size_t i = 0; i < stateCount; ++i) {
++            std::uint64_t state{};
++            if (!reader.read(8, state)) return false;
++            states[i] = static_cast<std::uint8_t>(state);
++        }
++    }
++    // A bubble id omitted by a delta refers to its previous mirror value. This
++    // stateless decoder must not invent that id or claim a full acknowledgement.
++    if (hasKeys && hasMasks && hasStates && bubble >= -1) {
++        if (keyCount > update.rosterEntries.size() - update.rosterEntryCount) return false;
++        if (top) update.topLevelRosterCount = static_cast<std::uint16_t>(keyCount);
++        for (std::size_t i = 0; i < keyCount; ++i) {
++            if (!append_roster_entry(update, keys[i], bubble,
++                    ((masks[i / 32] >> (i % 32)) & 1U) != 0U)) return false;
++            update.rosterEntries[update.rosterEntryCount - 1].state = states[i];
++        }
++    }
++    return true;
++}
++
++/** Parse both full acknowledgements and reflected partial roster deltas. */
+ [[nodiscard]] bool parse_roster_acknowledgement(bits::Reader& reader,
+                                                 SenseUpdate& update) noexcept {
+-    std::uint64_t present = 0;
+-    if (!reader.read(kPresenceWidth, present)) {
+-        return false;
+-    }
+-    if (present == 0) {
+-        return true;
+-    }
++    std::uint64_t present{};
++    if (!reader.read(1, present)) return false;
++    if (!present) return true;
+     update.hasRosterAcknowledgement = true;
+-    if (!read_expected(reader, kPresenceWidth, 1)
+-        || !read_expected(reader, kPresenceWidth, 1)) {
+-        return false;
+-    }
+-
+-    std::uint64_t topCountValue = 0;
+-    if (!reader.read(kTopCountWidth, topCountValue) || topCountValue > kMaximumTopKeys
+-        || topCountValue > update.rosterEntries.size()) {
+-        return false;
+-    }
+-    const auto topCount = static_cast<std::size_t>(topCountValue);
+-    update.topLevelRosterCount = static_cast<std::uint16_t>(topCount);
+-    for (std::size_t index = 0; index < topCount; ++index) {
+-        std::uint64_t key = 0;
+-        if (!reader.read(kKeyWidth, key)
+-            || !append_roster_entry(update, static_cast<std::uint32_t>(key), -1, false)) {
+-            return false;
+-        }
+-    }
+-    if (!read_expected(reader, kPresenceWidth, 1)) {
+-        return false;
+-    }
+-    std::array<std::uint32_t, kTopMaskWords> topMasks{};
+-    if (!read_masks(reader, topMasks) || !read_expected(reader, kPresenceWidth, 1)) {
+-        return false;
+-    }
+-    std::uint64_t topStateCount = 0;
+-    if (!reader.read(kTopCountWidth, topStateCount) || topStateCount != topCount) {
+-        return false;
+-    }
+-    for (std::size_t index = 0; index < topCount; ++index) {
+-        std::uint64_t state = 0;
+-        if (!reader.read(8, state)) {
+-            return false;
+-        }
+-        RosterEntry& entry = update.rosterEntries[index];
+-        entry.state = static_cast<std::uint8_t>(state);
+-        entry.active = ((topMasks[index / 32] >> (index % 32)) & 1U) != 0U;
+-    }
+-
+-    std::uint64_t hasBubbles = 0;
+-    if (!reader.read(kPresenceWidth, hasBubbles)) {
+-        return false;
+-    }
+-    if (hasBubbles == 0) {
+-        return true;
+-    }
+-    std::uint64_t bubbleCountValue = 0;
+-    if (!reader.read(kBubbleCountWidth, bubbleCountValue)
+-        || bubbleCountValue > kMaximumBubble + 1U) {
+-        return false;
+-    }
+-    update.bubbleBlockCount = static_cast<std::uint8_t>(bubbleCountValue);
+-    for (std::size_t block = 0; block < bubbleCountValue; ++block) {
+-        std::uint64_t encodedBubble = 0;
+-        std::uint64_t keyCountValue = 0;
+-        if (!read_expected(reader, kPresenceWidth, 1)
+-            || !reader.read(kKeyWidth, encodedBubble) || encodedBubble < kBubbleKeyBias
+-            || encodedBubble - kBubbleKeyBias > kMaximumBubble
+-            || !read_expected(reader, kPresenceWidth, 1)
+-            || !read_expected(reader, kPresenceWidth, 1)
+-            || !reader.read(kBubbleCountWidth, keyCountValue)
+-            || keyCountValue > kMaximumBubbleKeys
+-            || keyCountValue > update.rosterEntries.size() - update.rosterEntryCount) {
+-            return false;
+-        }
+-        const auto bubble = static_cast<std::int16_t>(encodedBubble - kBubbleKeyBias);
+-        const std::size_t keyCount = static_cast<std::size_t>(keyCountValue);
+-        const std::size_t firstEntry = update.rosterEntryCount;
+-        for (std::size_t index = 0; index < keyCount; ++index) {
+-            std::uint64_t key = 0;
+-            if (!reader.read(kKeyWidth, key)
+-                || !append_roster_entry(
+-                    update, static_cast<std::uint32_t>(key), bubble, false)) {
+-                return false;
+-            }
+-        }
+-        if (!read_expected(reader, kPresenceWidth, 1)) {
+-            return false;
+-        }
+-        std::array<std::uint32_t, kBubbleMaskWords> masks{};
+-        if (!read_masks(reader, masks) || !read_expected(reader, kPresenceWidth, 1)) {
+-            return false;
+-        }
+-        std::uint64_t stateCount = 0;
+-        if (!reader.read(kBubbleCountWidth, stateCount) || stateCount != keyCount) {
+-            return false;
+-        }
+-        for (std::size_t index = 0; index < keyCount; ++index) {
+-            std::uint64_t state = 0;
+-            if (!reader.read(8, state)) {
+-                return false;
+-            }
+-            RosterEntry& entry = update.rosterEntries[firstEntry + index];
+-            entry.state = static_cast<std::uint8_t>(state);
+-            entry.active = ((masks[index / 32] >> (index % 32)) & 1U) != 0U;
+-        }
++    if (!parse_roster_body(reader, update, -1, true)) return false;
++    if (!reader.read(1, present)) return false;
++    if (!present) return true;
++    std::uint64_t count{};
++    if (!reader.read(kBubbleCountWidth, count) || count > kMaximumBubble + 1U) return false;
++    update.bubbleBlockCount = static_cast<std::uint8_t>(count);
++    for (std::size_t i = 0; i < count; ++i) {
++        std::int16_t bubble = -2;
++        if (!reader.read(1, present)) return false;
++        if (present) {
++            std::uint64_t value{};
++            if (!reader.read(32, value) || value < kBubbleKeyBias
++                || value - kBubbleKeyBias > kMaximumBubble) return false;
++            bubble = static_cast<std::int16_t>(value - kBubbleKeyBias);
++        }
++        if (!parse_roster_body(reader, update, bubble, false)) return false;
+     }
+     return true;
+ }

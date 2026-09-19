@@ -4,6 +4,11 @@
 
 # Dawn
 
+> **1AU-fix test branch:** see the [candidate repair package](tools/one_au_fix/README.md)
+> for the verified entrance fix and tester instructions. The full source port is
+> pending the unpublished 1AU integration checkout; a normal build of this branch
+> does not yet include the complete repair.
+
 **Missions and a native loadout editor for Destiny 2 build 86657.**
 
 Install a packaged release over an existing game installation using the bundled Dawn installer.

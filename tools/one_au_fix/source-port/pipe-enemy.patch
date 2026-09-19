@@ -1,0 +1,7 @@
+--- a/Dawn/src/state/activity/vanilla/one_au/mission.h
++++ b/Dawn/src/state/activity/vanilla/one_au/mission.h
+@@ -48,1 +48,3 @@
+-inline constexpr auto kPipes=cohort_members<kBridge>({58,59});
++// Live actor inspection identified source 58 on the undeployed bridge.
++// Keep the other pipe defender and the complete Mercury console encounter.
++inline constexpr auto kPipes=cohort_members<kBridge>({59});

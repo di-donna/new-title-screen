@@ -1,0 +1,11 @@
+--- a/Dawn/src/server/bap/encrypted/activity_message/membership/activity_membership_route.h
++++ b/Dawn/src/server/bap/encrypted/activity_message/membership/activity_membership_route.h
+@@ -44,7 +44,7 @@
+         update.currentRegion={parsed.currentRegion.index,parsed.currentRegion.hash};
+         update.hasCurrentRegion=parsed.hasCurrentRegion;
+     }
+-    if(destination=="mission_launchpad") {
++    if(destination=="mission_launchpad" || destination=="mission_ember") {
+         const auto leg=[](const auto& v) -> state::activity::membership::RegionLeg {
+             return {v.sliceSetIndex,v.sliceSetHash,v.regionIndex,v.publicState,v.auxState,v.present};
+         };

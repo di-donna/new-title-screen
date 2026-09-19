@@ -1,0 +1,29 @@
+{
+  "schema": 1,
+  "candidateSha256": "403dc4bbddd6235273f3e5bd15268054b89852104111ca96e4109e85d7cfec1c",
+  "patchedSha256": "be08e2a8b73f661fe291998f6ac6b3f36838dfa4bcab9f28f24d5e0d43779f0f",
+  "gameplay": {
+    "freshMissionReload": true,
+    "ghostScan": true,
+    "bridgeHiddenBeforeConsole": true,
+    "bridgeUnfoldsWithoutStaticDuplicate": true,
+    "playerFallsThroughBeforeDeploymentAtTestedSpot": true,
+    "earlyPipeEnemyAbsent": true,
+    "doorOpens": true,
+    "fullProcessRestartOfFinalVersion": false,
+    "entireMissionPlaythrough": false
+  },
+  "automated": {
+    "regionMachineCases": 445,
+    "partialRosterMachineCases": 2487,
+    "consoleMachineCases": 8259,
+    "entranceMachineCases": 8659,
+    "enemyCohortMachineCases": 140,
+    "windowsLoaderAndUnwindChecked": true
+  },
+  "knownLimitations": [
+    "The final gameplay verification used a live-updated client; cold startup of the complete final patch remains to be tested.",
+    "One failed mission reload was reported; no retained fatal-process record establishes its cause.",
+    "The source that produced the 1AU integration candidate is unpublished and absent from this branch. A normal DLL build of this branch does not include the complete repair."
+  ]
+}
