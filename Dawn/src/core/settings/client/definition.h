@@ -19,6 +19,28 @@ struct Settings {
     /** Points the Client at a server outside this process. Off answers everything in process. */
     external::Settings externalServer;
     /**
+     * Replaces the title-screen (bootflow) artwork with the DDS files embedded in the DLL.
+     * Off leaves the stock package art untouched. On by default.
+     */
+    bool customBootflowTextures{true};
+    /**
+     * Inverts the white boot screens (the Bungie splash and the loading screens before the
+     * title) so they are dark. Bright frames are inverted until the title screen arrives.
+     * On by default.
+     */
+    bool invertSplashScreens{true};
+    /**
+     * Draws the title-screen filigree: two mirrored, morphing Julia medallions rendered by the
+     * DLL over the title screen, under the logo and the text. On by default.
+     */
+    bool titleFiligree{true};
+    /**
+     * Research aid: logs every GPU entry the client's decoded-entry dispatcher receives (class,
+     * tag, size, first bytes) and writes each texture payload once to exports\texdump\, so one
+     * launch shows which textures a screen is drawn from. Off by default.
+     */
+    bool dumpGpuEntries{false};
+    /**
      * Releases the world-transition fade channel at the in-world step.
      * The client only releases it on the player spawn, so this covers a spawn that never runs
      * and leaves the world black. On by default.

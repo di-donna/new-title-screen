@@ -30,6 +30,8 @@ constexpr float kProgressWidth = 320.0F;
 constexpr float kAutomaticProgressHeight = 0.0F;
 /** A negative fraction picks Dear ImGui's indeterminate progress animation. */
 constexpr float kIndeterminateRate = -1.0F;
+/** The bar fills in the Dawn logo blue (#0859F2); Dear ImGui's own histogram colour is yellow. */
+constexpr ImVec4 kBarFill{0.031F, 0.349F, 0.949F, 1.0F};
 /** The overlay is centered on the horizontal axis and pinned to the bottom edge. */
 constexpr ImVec2 kBottomCenterPivot{0.5F, 1.0F};
 /** The overlay carries no decoration, takes no input, and is never saved. */
@@ -126,9 +128,13 @@ bool draw() noexcept {
     if (ImGui::Begin("##dawn_busy", nullptr, kOverlayFlags)) {
         ImGui::TextUnformatted(kHeadings[g_shownTask]);
         ImGui::TextDisabled("%s", kDetail);
+        // The fill colour is pushed here rather than set in the theme: the theme's histogram
+        // colour also marks unavailable activities on the mission cards, which stay yellow.
+        ImGui::PushStyleColor(ImGuiCol_PlotHistogram, kBarFill);
         ImGui::ProgressBar(kIndeterminateRate * static_cast<float>(ImGui::GetTime()),
                            {barWidth, kAutomaticProgressHeight},
                            "");
+        ImGui::PopStyleColor();
     }
     ImGui::End();
     ImGui::PopStyleVar();

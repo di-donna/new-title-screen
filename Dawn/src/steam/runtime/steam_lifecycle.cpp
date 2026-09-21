@@ -3,6 +3,7 @@
 #include <atomic>
 
 #include "../../client/graphics/wine_compat.h"
+#include "../../client/hooks/bootflow/bootflow_texture_override.h"
 #include "../../client/hooks/egress/runtime.h"
 #include "../../client/hooks/package_trust/package_trust_bypass.h"
 #include "../../client/runtime/runtime.h"
@@ -74,8 +75,22 @@ bool initialize(void* module) noexcept {
         ReleaseSRWLockExclusive(&g_lifecycleLock);
         return false;
     }
+    // Bootflow GPU entries can load before the first Steam callback pump. The decoded-entry
+    // override must therefore attach here while the stock `_unp1` package remains registered
+    // through its native path.
+    if (!client::hooks::bootflow::texture_override::install(module)) {
+        core::log::write(core::log::Channel::client,
+                         core::log::Level::warn,
+                         "ev=steam_init stage=bootflow_texture result=fail");
+    }
     context::advance_generation();
     g_initialized.store(true, std::memory_order_release);
+    // The boot-screen layer must see the game's first frame, which is presented before the first
+    // callback pump, so the presentation hooks attach here rather than from the pump.
+    if (!g_graphicsActivationAttempted) {
+        g_graphicsActivationAttempted = true;
+        (void)client::activate_graphics_once();
+    }
     core::log::write(core::log::Channel::client, core::log::Level::info, "ev=steam_init result=ok");
     // The guard attaches above, before Core logging exists, so its outcome is reported here.
     client::hooks::egress::report_installation();

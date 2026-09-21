@@ -279,6 +279,8 @@
     <ClCompile Include="src\client\hooks\graphics\renderer\graphics_renderer_lifecycle.cpp" />
     <ClCompile Include="src\client\hooks\graphics\renderer\graphics_renderer_frame.cpp" />
     <ClCompile Include="src\client\hooks\graphics\renderer\graphics_renderer_report.cpp" />
+    <ClCompile Include="src\client\hooks\graphics\renderer\graphics_splash_invert.cpp" />
+    <ClCompile Include="src\client\hooks\graphics\renderer\graphics_title_filigree.cpp" />
     <ClCompile Include="src\client\hooks\egress\dns\egress_dns_replacements.cpp" />
     <ClCompile Include="src\client\hooks\egress\resolver\egress_resolver_forward.cpp" />
     <ClCompile Include="src\client\hooks\egress\resolver\egress_resolver_reverse.cpp" />
@@ -339,6 +341,9 @@
     <ClCompile Include="src\client\hooks\activity_lifecycle\native_activation_registry.cpp" />
     <ClCompile Include="src\client\hooks\activity_lifecycle\native_activation_validation.cpp" />
     <ClCompile Include="src\client\hooks\bootflow\bootflow_hook_lifecycle.cpp" />
+    <ClCompile Include="src\client\hooks\bootflow\bootflow_texture_override.cpp" />
+    <ClCompile Include="src\client\hooks\bootflow\bootflow_texture_recolour.cpp" />
+    <ClCompile Include="src\client\hooks\bootflow\bc7_codec.cpp" />
     <ClCompile Include="src\client\hooks\bootflow\character_select_hold.cpp" />
     <ClCompile Include="src\client\hooks\bootflow\composition_check.cpp" />
     <ClCompile Include="src\client\hooks\bootflow\orbit_handoff.cpp" />
@@ -995,6 +1000,8 @@
     <ClInclude Include="src\client\hooks\graphics\renderer\renderer.h" />
     <ClInclude Include="src\client\hooks\graphics\renderer\state.h" />
     <ClInclude Include="src\client\hooks\graphics\renderer\graphics_renderer_report.h" />
+    <ClInclude Include="src\client\hooks\graphics\renderer\graphics_splash_invert.h" />
+    <ClInclude Include="src\client\hooks\graphics\renderer\graphics_title_filigree.h" />
     <ClInclude Include="src\client\ui\runtime\client_ui_module_runtime.h" />
     <ClInclude Include="src\client\memory\current_process_memory.h" />
     <ClInclude Include="src\client\content\handles\layout.h" />
@@ -1356,6 +1363,9 @@
     <ClInclude Include="src\client\hooks\bitmap\bitmap_hook_lifecycle.h" />
     <ClInclude Include="src\client\hooks\bootflow\internal.h" />
     <ClInclude Include="src\client\hooks\bootflow\bootflow_hook_lifecycle.h" />
+    <ClInclude Include="src\client\hooks\bootflow\bootflow_texture_override.h" />
+    <ClInclude Include="src\client\hooks\bootflow\bootflow_texture_recolour.h" />
+    <ClInclude Include="src\client\hooks\bootflow\bc7_codec.h" />
     <ClInclude Include="src\client\hooks\bootflow\type31_objective_capture.h" />
     <ClInclude Include="src\client\hooks\bootflow\spawn_hold_policy.h" />
     <ClInclude Include="src\client\hooks\bootflow\spawn\spawn_gate_record_dump.h" />

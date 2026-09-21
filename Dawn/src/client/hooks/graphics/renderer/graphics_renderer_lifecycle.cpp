@@ -11,6 +11,8 @@
 #include "../../polled_input/runtime.h"
 #include "../input/input.h"
 #include "graphics_renderer_report.h"
+#include "graphics_splash_invert.h"
+#include "graphics_title_filigree.h"
 #include "state.h"
 #include "../../../ui/mission_launch/mission_launch_art.h"
 
@@ -250,6 +252,8 @@ void release_render_target(Resources& resources) noexcept {
 
 /** @param resources SDK resources freed in an order that respects their dependencies. */
 void release_resources(Resources& resources) noexcept {
+    splash_invert::release();
+    title_filigree::release();
     client::ui::mission_launch::art::release();
     release_render_target(resources);
     core::ui::modules::loadout::preview::release();

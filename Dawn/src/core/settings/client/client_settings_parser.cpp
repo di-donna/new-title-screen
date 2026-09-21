@@ -10,6 +10,10 @@ bool Parser::client_settings(client::Settings& output) noexcept {
     client::Settings candidate = output;
     bool hasUserInterface = false;
     bool hasExternalServer = false;
+    bool hasCustomBootflowTextures = false;
+    bool hasInvertSplashScreens = false;
+    bool hasTitleFiligree = false;
+    bool hasDumpGpuEntries = false;
     bool hasFadeRelease = false;
     bool hasForceJoinRequestReady = false;
     bool hasRegionPrivate = false;
@@ -36,6 +40,26 @@ bool Parser::client_settings(client::Settings& output) noexcept {
                 return false;
             }
             hasExternalServer = true;
+        } else if (key == "custom_bootflow_textures") {
+            if (hasCustomBootflowTextures || !boolean(candidate.customBootflowTextures)) {
+                return false;
+            }
+            hasCustomBootflowTextures = true;
+        } else if (key == "invert_splash_screens") {
+            if (hasInvertSplashScreens || !boolean(candidate.invertSplashScreens)) {
+                return false;
+            }
+            hasInvertSplashScreens = true;
+        } else if (key == "title_filigree") {
+            if (hasTitleFiligree || !boolean(candidate.titleFiligree)) {
+                return false;
+            }
+            hasTitleFiligree = true;
+        } else if (key == "dump_gpu_entries") {
+            if (hasDumpGpuEntries || !boolean(candidate.dumpGpuEntries)) {
+                return false;
+            }
+            hasDumpGpuEntries = true;
         } else if (key == "fade_release") {
             if (hasFadeRelease || !boolean(candidate.fadeRelease)) {
                 return false;

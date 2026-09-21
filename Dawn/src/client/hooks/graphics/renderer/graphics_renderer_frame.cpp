@@ -15,6 +15,8 @@
 #include "../../../../core/ui/theme/dawn_ui_theme.h"
 #include "../input/input.h"
 #include "graphics_renderer_report.h"
+#include "graphics_splash_invert.h"
+#include "graphics_title_filigree.h"
 #include "state.h"
 #include "../../../ui/mission_launch/mission_launch_art.h"
 #include "../../../camera/camera_settings.h"
@@ -143,6 +145,17 @@ void render_frame_locked() noexcept {
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
+    // The boot-screen inversion goes first: it lives in the background draw list, under
+    // everything else the frame draws.
+    const bool invertDrawn =
+        splash_invert::draw(g_resources.swapChain, g_resources.device, g_resources.context);
+    // The title filigree follows it in the same list: it waits for the inversion to let go of the
+    // title, and stays out of any frame the inversion drew (its quad would overwrite that one).
+    const bool filigreeDrawn = title_filigree::draw(g_resources.swapChain,
+                                                    g_resources.device,
+                                                    g_resources.context,
+                                                    splash_invert::acting(),
+                                                    splash_invert::covering());
     // A hidden surface still draws until its close animation ends, so the layout decides. The
     // HUD, running-work and notice overlays draw whether the surface is open or not. The HUD
     // goes first, so the surface stays above it when the two meet.
@@ -150,7 +163,7 @@ void render_frame_locked() noexcept {
     const bool surfaceDrawn = core::ui::layout::render(visibility.visible);
     const bool busyDrawn = core::ui::busy::draw();
     const bool noticeDrawn = core::ui::notice::draw();
-    if (!hudDrawn && !surfaceDrawn && !busyDrawn && !noticeDrawn) {
+    if (!hudDrawn && !surfaceDrawn && !busyDrawn && !noticeDrawn && !invertDrawn && !filigreeDrawn) {
         // A frame nobody claimed still drains backend state, and sends no draw data.
         ImGui::EndFrame();
         return;

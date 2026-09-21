@@ -18,6 +18,8 @@
 #include "../../executable/image.h"
 #include "../../targets/game.h"
 #include "../bootflow/internal.h"
+#include "../graphics/renderer/graphics_splash_invert.h"
+#include "../graphics/renderer/graphics_title_filigree.h"
 
 namespace dawn::client::hooks::retail_log {
 namespace {
@@ -1072,12 +1074,23 @@ void capture_activity_stack(std::int32_t siteId, std::string_view text) noexcept
  * @param text Borrowed native buffer.
  */
 void capture_line(std::int32_t siteId, const char* text) noexcept {
-    if (!core::log::accepts(core::log::Channel::client, core::log::Level::info)) {
-        return;
-    }
     std::array<char, kNativeTextSize> sanitized{};
     const std::size_t textLength = sanitize(text, sanitized);
     const std::string_view nativeText{sanitized.data(), textLength};
+    // The two title-screen layers follow the world-controller states by name ("bootflow:start" is
+    // the title screen). They need the signal whether or not the line is mirrored, so it is taken
+    // before the threshold check.
+    constexpr std::string_view kEntering = "Entering state '";
+    const std::size_t entering = nativeText.find(kEntering);
+    if (entering != std::string_view::npos) {
+        std::string_view state = nativeText.substr(entering + kEntering.size());
+        state = state.substr(0, state.find('\''));
+        graphics::renderer::splash_invert::note_state(state);
+        graphics::renderer::title_filigree::note_state(state);
+    }
+    if (!core::log::accepts(core::log::Channel::client, core::log::Level::info)) {
+        return;
+    }
     // Observation side effects still see every line. Only the mirrored text is summarized.
     capture_activity_stack(siteId, nativeText);
     AcquireSRWLockExclusive(&g_channelNameReportLock);
