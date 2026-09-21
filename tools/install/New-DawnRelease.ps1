@@ -76,7 +76,16 @@ $manifest = [ordered]@{
 }
 [IO.File]::WriteAllText((Join-Path $output 'release.json'), ($manifest | ConvertTo-Json -Depth 10), $utf8)
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-[IO.Compression.ZipFile]::CreateFromDirectory($output, $zip, [IO.Compression.CompressionLevel]::Optimal, $false)
+Add-Type -AssemblyName System.IO.Compression
+# Entries are written one by one with forward-slash names: ZipFile.CreateFromDirectory under Windows PowerShell
+# stores backslashes, which Linux and macOS extractors keep as literal file names instead of folders.
+$archive = [IO.Compression.ZipFile]::Open($zip, [IO.Compression.ZipArchiveMode]::Create)
+try {
+    foreach ($file in Get-ChildItem -LiteralPath $output -Recurse -File | Sort-Object FullName) {
+        $name = $file.FullName.Substring($output.Length + 1).Replace([char]92, [char]47)
+        [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $file.FullName, $name, [IO.Compression.CompressionLevel]::Optimal) | Out-Null
+    }
+} finally { $archive.Dispose() }
 Write-Host "Player ZIP: $zip"
 Write-Host "SHA256: $((Get-FileHash -LiteralPath $zip).Hash)"
 Write-Host 'Contains only the installer and runtime payload. Test this release on a separate game installation before publication.'
